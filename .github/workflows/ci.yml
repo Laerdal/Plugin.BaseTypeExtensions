@@ -36,7 +36,9 @@ defaults:
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
-  SOLUTION_NAME: Plugin.BaseTypeExtensions.slnx
+  SOLUTION_PATH: 'Plugin.BaseTypeExtensions.slnx'
+  DOCS_PATH: 'Plugin.BaseTypeExtensions.Docs/'
+
 
 jobs:
   version:
@@ -75,7 +77,7 @@ jobs:
         uses: laerdal/github_actions/dotnet@main
         with:
           command: workload
-          arguments: restore '${{ github.workspace }}/${{ env.SOLUTION_NAME }}'
+          arguments: restore '${{ github.workspace }}/${{ env.SOLUTION_PATH }}'
           show-summary: true
 
       # ============================ BUILD ============================
@@ -83,14 +85,14 @@ jobs:
         uses: laerdal/github_actions/dotnet@main
         with:
           command: restore
-          path: '${{ github.workspace }}/${{ env.SOLUTION_NAME }}'
+          path: '${{ github.workspace }}/${{ env.SOLUTION_PATH }}'
           show-summary: true
 
       - name: '🔨 Build'
         uses: laerdal/github_actions/dotnet@main
         with:
           command: build
-          path: '${{ github.workspace }}/${{ env.SOLUTION_NAME }}'
+          path: '${{ github.workspace }}/${{ env.SOLUTION_PATH }}'
           configuration: Release
           no-restore: true
           arguments: >
@@ -111,7 +113,7 @@ jobs:
         uses: laerdal/github_actions/dotnet-test@main
         if: ${{ success() && !cancelled() }}
         with:
-          path: '${{ github.workspace }}/${{ env.SOLUTION_NAME }}'
+          path: '${{ github.workspace }}/${{ env.SOLUTION_PATH }}'
           configuration: Release
           no-build: true
           logger: 'trx;LogFileName=test-results.trx'
@@ -143,7 +145,7 @@ jobs:
       - name: '🔍 Check if docs are needed'
         id: check-docs
         run: |
-          if [ -d "${{ github.workspace }}/Docs" ]; then
+          if [ -d "${{ github.workspace }}/${{ env.DOCS_PATH }}" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
@@ -153,23 +155,23 @@ jobs:
         uses: laerdal/github_actions/dotnet-docfx-metadata@main
         if: ${{ success() && !cancelled() && steps.check-docs.outputs.exists == 'true' }}
         with:
-          config: '${{ github.workspace }}/Docs/docfx.json'
-          output: '${{ github.workspace }}/Docs/api'
+          config: '${{ github.workspace }}/${{ env.DOCS_PATH }}/docfx.json'
+          output: '${{ github.workspace }}/${{ env.DOCS_PATH }}/api'
           show-summary: true
 
       - name: "📚 Build documentation site"
         uses: laerdal/github_actions/dotnet-docfx-build@main
         if: ${{ success() && !cancelled() && steps.check-docs.outputs.exists == 'true' }}
         with:
-          config: '${{ github.workspace }}/Docs/docfx.json'
-          output: '${{ github.workspace }}/Docs/site'
+          config: '${{ github.workspace }}/${{ env.DOCS_PATH }}/docfx.json'
+          output: '${{ github.workspace }}/${{ env.DOCS_PATH }}/site'
           show-summary: true
 
       - name: "📦 Upload GitHub Pages artifact"
         if: ${{ success() && !cancelled() && github.ref == 'refs/heads/main' && steps.check-docs.outputs.exists == 'true' }}
         uses: actions/upload-pages-artifact@v4
         with:
-          path: '${{ github.workspace }}/Docs/site'
+          path: '${{ github.workspace }}/${{ env.DOCS_PATH }}/site'
           name: github-pages
 
   publish-docs:
