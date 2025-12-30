@@ -132,6 +132,7 @@ jobs:
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No test results found. Skipping test artifact upload."
           fi
 
       - name: '📦 Upload test artifacts'
@@ -145,10 +146,11 @@ jobs:
       - name: '🔍 Check if docs are needed'
         id: check-docs
         run: |
-          if [ -d "${{ github.workspace }}/${{ env.DOCS_PATH }}" ]; then
+          if [ "${{ env.DOCS_PATH }}" != "" ] && [ -d "${{ github.workspace }}/${{ env.DOCS_PATH }}" ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Documentation path is not set or does not exist, skipping documentation build."
           fi
 
       - name: "📚 Build documentation metadata"
