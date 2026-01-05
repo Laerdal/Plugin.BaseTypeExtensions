@@ -39,7 +39,6 @@ env:
   SOLUTION_PATH: 'Plugin.BaseTypeExtensions.slnx'
   DOCS_PATH: 'Plugin.BaseTypeExtensions.Docs/'
 
-
 jobs:
   version:
     uses: laerdal/github_actions/.github/workflows/reusable-version.yml@main
