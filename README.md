@@ -1,6 +1,6 @@
 # 🔧 Plugin.BaseTypeExtensions
 
-<div align="center">
+<div style="max-width: 256px; margin-left: auto; margin-right: auto;">
 
 [![Icon](icon.png)](https://github.com/laerdal/Plugin.ByteArrays)
 
