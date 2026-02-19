@@ -220,7 +220,7 @@ public class DictionaryExtensionsTests
 
         var action = async () => await dict.UpdateFromAsync(
             addedItems: [new KeyValuePair<string, int>("b", 2)],
-            removedItems: null,
+            removedItems: [],
             cancellationToken: cts.Token);
 
         await action.Should().ThrowAsync<OperationCanceledException>();

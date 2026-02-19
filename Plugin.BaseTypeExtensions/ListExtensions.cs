@@ -45,7 +45,7 @@ public static class ListExtensions
     /// <param name="fromInputTypeToOutputTypeConversion">Function to convert input items to output items.</param>
     public static void UpdateFrom<TInput, TOutput>(
         this IList<TOutput> output,
-        IList<TInput> input,
+        IEnumerable<TInput> input,
         Func<TInput, TOutput, bool> areRepresentingTheSameItem,
         Func<TInput, TOutput> fromInputTypeToOutputTypeConversion)
     {
@@ -76,7 +76,7 @@ public static class ListExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void UpdateFrom<TInput, TOutput>(
         this IList<TOutput> output,
-        IList<TInput> input,
+        IEnumerable<TInput> input,
         Func<TInput, TOutput> fromInputTypeToOutputTypeConversion)
         where TOutput : IEquatable<TInput>
     {
@@ -94,7 +94,7 @@ public static class ListExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void UpdateFrom<T>(
         this IList<T> output,
-        IList<T> input,
+        IEnumerable<T> input,
         Func<T, T, bool> areRepresentingTheSameItem)
     {
         output.UpdateFrom(input, areRepresentingTheSameItem, i => i);
@@ -108,7 +108,7 @@ public static class ListExtensions
     /// <param name="output">The list to update.</param>
     /// <param name="input">The input list to synchronize with.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void UpdateFrom<T>(this IList<T> output, IList<T> input)
+    public static void UpdateFrom<T>(this IList<T> output, IEnumerable<T> input)
     {
         output.UpdateFrom(input, (equatable1, equatable2) => equatable1 != null && equatable1.Equals(equatable2), i => i);
     }
@@ -175,7 +175,7 @@ public static class ListExtensions
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     public static ValueTask UpdateFromAsync<TInput, TOutput>(
         this IList<TOutput> output,
-        IList<TInput> input,
+        IEnumerable<TInput> input,
         Func<TInput, TOutput, bool> areRepresentingTheSameItem,
         Func<TInput, TOutput> fromInputTypeToOutputTypeConversion,
         Func<TOutput, CancellationToken, ValueTask> addAction,
