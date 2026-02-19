@@ -18,7 +18,7 @@ public class EnumerableExtensionsTests
     [Fact]
     public void NullIfEmpty_WorksForGeneric()
     {
-        IEnumerable<int>? value = new[] { 1 };
+        IEnumerable<int>? value = [1];
         value.NullIfEmpty().Should().BeSameAs(value);
         ((IEnumerable<int>?)Array.Empty<int>()).NullIfEmpty().Should().BeNull();
         IEnumerable<int>? nullValue = null;
@@ -76,8 +76,8 @@ public class EnumerableExtensionsTests
         var removed = new List<int>();
 
         output.UpdateFrom(
-            addedItems: new[] { 4, 5 },
-            removedItems: new[] { 2 },
+            addedItems: [4, 5],
+            removedItems: [2],
             addAction: added.Add,
             removeAction: removed.Add);
 
@@ -92,8 +92,8 @@ public class EnumerableExtensionsTests
         var removed = new List<int>();
 
         output.UpdateFrom(
-            addedItems: null,
-            removedItems: new[] { 2 },
+            addedItems: [],
+            removedItems: [2],
             addAction: _ => throw new InvalidOperationException("Should not add"),
             removeAction: removed.Add);
 
@@ -107,8 +107,8 @@ public class EnumerableExtensionsTests
         var added = new List<int>();
 
         output.UpdateFrom(
-            addedItems: new[] { 3, 4 },
-            removedItems: null,
+            addedItems: [3, 4],
+            removedItems: [],
             addAction: added.Add,
             removeAction: _ => throw new InvalidOperationException("Should not remove"));
 
@@ -182,8 +182,8 @@ public class EnumerableExtensionsTests
         var removed = new List<int>();
 
         await output.UpdateFromAsync(
-            addedItems: new[] { 4, 5 },
-            removedItems: new[] { 2 },
+            addedItems: [4, 5],
+            removedItems: [2],
             addAction: async (item, ct) => { await Task.Yield(); added.Add(item); },
             removeAction: async (item, ct) => { await Task.Yield(); removed.Add(item); });
 
@@ -199,8 +199,8 @@ public class EnumerableExtensionsTests
         cts.Cancel();
 
         var action = async () => await output.UpdateFromAsync(
-            addedItems: new[] { 4, 5 },
-            removedItems: null,
+            addedItems: [4, 5],
+            removedItems: [],
             addAction: async (item, ct) => { await Task.Delay(100, ct); },
             removeAction: async (item, ct) => { await Task.Delay(100, ct); },
             cancellationToken: cts.Token);

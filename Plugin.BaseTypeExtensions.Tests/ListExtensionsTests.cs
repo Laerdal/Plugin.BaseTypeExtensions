@@ -68,8 +68,8 @@ public class ListExtensionsTests
         var list = new List<int> { 1, 2, 3 };
 
         list.UpdateFrom(
-            addedItems: new[] { 4, 5 },
-            removedItems: new[] { 2 });
+            addedItems: [4, 5],
+            removedItems: [2]);
 
         list.Should().Equal(1, 3, 4, 5);
     }
@@ -80,8 +80,8 @@ public class ListExtensionsTests
         var list = new List<int> { 1, 2, 3 };
 
         list.UpdateFrom(
-            addedItems: null,
-            removedItems: new[] { 2 });
+            addedItems: [],
+            removedItems: [2]);
 
         list.Should().Equal(1, 3);
     }
@@ -92,8 +92,8 @@ public class ListExtensionsTests
         var list = new List<int> { 1, 2 };
 
         list.UpdateFrom(
-            addedItems: new[] { 3, 4 },
-            removedItems: null);
+            addedItems: [3, 4],
+            removedItems: []);
 
         list.Should().Equal(1, 2, 3, 4);
     }
@@ -118,8 +118,8 @@ public class ListExtensionsTests
         var removed = new List<int>();
 
         await list.UpdateFromAsync(
-            addedItems: new[] { 4, 5 },
-            removedItems: new[] { 2 },
+            addedItems: [4, 5],
+            removedItems: [2],
             addAction: async (item, ct) => { await Task.Yield(); added.Add(item); list.Add(item); },
             removeAction: async (item, ct) => { await Task.Yield(); removed.Add(item); return list.Remove(item); });
 
@@ -134,8 +134,8 @@ public class ListExtensionsTests
         var list = new List<int> { 1, 2 };
 
         await list.UpdateFromAsync(
-            addedItems: new[] { 3 },
-            removedItems: new[] { 1 });
+            addedItems: [3],
+            removedItems: [1]);
 
         list.Should().Equal(2, 3);
     }
@@ -148,8 +148,8 @@ public class ListExtensionsTests
         cts.Cancel();
 
         var action = async () => await list.UpdateFromAsync(
-            addedItems: new[] { 3, 4 },
-            removedItems: null,
+            addedItems: [3, 4],
+            removedItems: [],
             cancellationToken: cts.Token);
 
         await action.Should().ThrowAsync<OperationCanceledException>();

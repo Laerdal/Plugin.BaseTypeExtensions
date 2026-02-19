@@ -14,30 +14,26 @@ public static class ListExtensions
     /// <param name="removedItems">The items to remove from the list.</param>
     public static void UpdateFrom<T>(
         this IList<T> output,
-        IEnumerable<T>? addedItems = null,
-        IEnumerable<T>? removedItems = null
+        IEnumerable<T> addedItems,
+        IEnumerable<T> removedItems
     )
     {
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
 
         lock (output)
         {
             // Add items
-            if (addedItems != null)
+            foreach (var item in addedItems)
             {
-                foreach (var item in addedItems)
-                {
-                    output.Add(item);
-                }
+                output.Add(item);
             }
 
             // Remove items
-            if (removedItems != null)
+            foreach (var item in removedItems)
             {
-                foreach (var item in removedItems)
-                {
-                    output.Remove(item);
-                }
+                output.Remove(item);
             }
         }
     }
@@ -94,14 +90,16 @@ public static class ListExtensions
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     public static async Task UpdateFromAsync<T>(
         this IList<T> output,
-        IEnumerable<T>? addedItems = null,
-        IEnumerable<T>? removedItems = null,
+        IEnumerable<T> addedItems,
+        IEnumerable<T> removedItems,
         Func<T, CancellationToken, Task>? addAction = null,
         Func<T, CancellationToken, Task<bool>>? removeAction = null,
         CancellationToken cancellationToken = default
     )
     {
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
 
         var finalAddAction = addAction ?? ((item, ct) =>
         {
@@ -112,23 +110,17 @@ public static class ListExtensions
         var finalRemoveAction = removeAction ?? ((item, ct) => Task.FromResult(output.Remove(item)));
 
         // Add items
-        if (addedItems != null)
+        foreach (var item in addedItems)
         {
-            foreach (var item in addedItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await finalAddAction(item, cancellationToken).ConfigureAwait(false);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await finalAddAction(item, cancellationToken).ConfigureAwait(false);
         }
 
         // Remove items
-        if (removedItems != null)
+        foreach (var item in removedItems)
         {
-            foreach (var item in removedItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await finalRemoveAction(item, cancellationToken).ConfigureAwait(false);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await finalRemoveAction(item, cancellationToken).ConfigureAwait(false);
         }
     }
 

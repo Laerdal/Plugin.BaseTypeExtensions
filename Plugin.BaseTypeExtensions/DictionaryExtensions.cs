@@ -58,8 +58,8 @@ public static class DictionaryExtensions
     /// <param name="removeAction">Function to perform when removing an item. If null and output is an IDictionary, uses the dictionary's Remove method.</param>
     public static void UpdateFrom<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> output,
-        IEnumerable<KeyValuePair<TKey, TValue>>? addedItems = null,
-        IEnumerable<KeyValuePair<TKey, TValue>>? removedItems = null,
+        IEnumerable<KeyValuePair<TKey, TValue>> addedItems,
+        IEnumerable<KeyValuePair<TKey, TValue>> removedItems,
         Action<TKey, TValue>? addAction = null,
         Func<TKey, bool>? removeAction = null
     ) where TKey : notnull
@@ -77,21 +77,17 @@ public static class DictionaryExtensions
         }
 
         // Add items
-        if (addedItems != null)
+        ArgumentNullException.ThrowIfNull(addedItems);
+        foreach (var item in addedItems)
         {
-            foreach (var item in addedItems)
-            {
-                addAction(item.Key, item.Value);
-            }
+            addAction(item.Key, item.Value);
         }
 
         // Remove items
-        if (removedItems != null)
+        ArgumentNullException.ThrowIfNull(removedItems);
+        foreach (var item in removedItems)
         {
-            foreach (var item in removedItems)
-            {
-                removeAction(item.Key);
-            }
+            removeAction(item.Key);
         }
     }
 

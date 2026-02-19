@@ -89,32 +89,28 @@ public static class EnumerableExtensions
     /// <param name="removeAction">Action to perform when removing an item.</param>
     public static void UpdateFrom<T>(
         this IEnumerable<T> output,
-        IEnumerable<T>? addedItems = null,
-        IEnumerable<T>? removedItems = null,
+        IEnumerable<T> addedItems,
+        IEnumerable<T> removedItems,
         Action<T>? addAction = null,
         Action<T>? removeAction = null
     )
     {
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
         ArgumentNullException.ThrowIfNull(addAction);
         ArgumentNullException.ThrowIfNull(removeAction);
 
         // Add items
-        if (addedItems != null)
+        foreach (var item in addedItems)
         {
-            foreach (var item in addedItems)
-            {
-                addAction(item);
-            }
+            addAction(item);
         }
 
         // Remove items
-        if (removedItems != null)
+        foreach (var item in removedItems)
         {
-            foreach (var item in removedItems)
-            {
-                removeAction(item);
-            }
+            removeAction(item);
         }
     }
 
@@ -427,35 +423,31 @@ public static class EnumerableExtensions
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
     public static async Task UpdateFromAsync<T>(
         this IEnumerable<T> output,
-        IEnumerable<T>? addedItems = null,
-        IEnumerable<T>? removedItems = null,
+        IEnumerable<T> addedItems,
+        IEnumerable<T> removedItems,
         Func<T, CancellationToken, Task>? addAction = null,
         Func<T, CancellationToken, Task>? removeAction = null,
         CancellationToken cancellationToken = default
     )
     {
         ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
         ArgumentNullException.ThrowIfNull(addAction);
         ArgumentNullException.ThrowIfNull(removeAction);
 
         // Add items
-        if (addedItems != null)
+        foreach (var item in addedItems)
         {
-            foreach (var item in addedItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await addAction(item, cancellationToken).ConfigureAwait(false);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await addAction(item, cancellationToken).ConfigureAwait(false);
         }
 
         // Remove items
-        if (removedItems != null)
+        foreach (var item in removedItems)
         {
-            foreach (var item in removedItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                await removeAction(item, cancellationToken).ConfigureAwait(false);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await removeAction(item, cancellationToken).ConfigureAwait(false);
         }
     }
 

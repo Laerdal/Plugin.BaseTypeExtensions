@@ -17,7 +17,7 @@ public class DictionaryExtensionsTests
     public void GetValuesForKeys_ReturnsProjectedValues()
     {
         var dictionary = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
-        dictionary.GetValuesForKeys(new[] { "a", "b" }).Should().Equal(1, 2);
+        dictionary.GetValuesForKeys(["a", "b"]).Should().Equal(1, 2);
     }
 
     [Fact]
@@ -117,8 +117,8 @@ public class DictionaryExtensionsTests
         var dict = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
 
         dict.UpdateFrom(
-            addedItems: new[] { new KeyValuePair<string, int>("c", 3) },
-            removedItems: new[] { new KeyValuePair<string, int>("a", 1) });
+            addedItems: [new KeyValuePair<string, int>("c", 3)],
+            removedItems: [new KeyValuePair<string, int>("a", 1)]);
 
         dict.Should().ContainKeys("b", "c");
         dict.Should().NotContainKey("a");
@@ -131,8 +131,8 @@ public class DictionaryExtensionsTests
         var dict = new Dictionary<string, int> { ["a"] = 1 };
 
         dict.UpdateFrom(
-            addedItems: new[] { new KeyValuePair<string, int>("b", 2) },
-            removedItems: new[] { new KeyValuePair<string, int>("a", 0) });
+            addedItems: [new KeyValuePair<string, int>("b", 2)],
+            removedItems: [new KeyValuePair<string, int>("a", 0)]);
 
         dict.Should().ContainKey("b");
         dict.Should().NotContainKey("a");
@@ -144,8 +144,8 @@ public class DictionaryExtensionsTests
         var dict = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
 
         dict.UpdateFrom(
-            addedItems: null,
-            removedItems: new[] { new KeyValuePair<string, int>("a", 1) });
+            addedItems: [],
+            removedItems: [new KeyValuePair<string, int>("a", 1)]);
 
         dict.Should().ContainKey("b");
         dict.Should().NotContainKey("a");
@@ -157,8 +157,8 @@ public class DictionaryExtensionsTests
         var dict = new Dictionary<string, int> { ["a"] = 1 };
 
         dict.UpdateFrom(
-            addedItems: new[] { new KeyValuePair<string, int>("b", 2) },
-            removedItems: null);
+            addedItems: [new KeyValuePair<string, int>("b", 2)],
+            removedItems: []);
 
         dict.Should().ContainKeys("a", "b");
     }
@@ -172,8 +172,8 @@ public class DictionaryExtensionsTests
         };
 
         var action = () => kvps.UpdateFrom(
-            addedItems: new[] { new KeyValuePair<string, int>("b", 2) },
-            removedItems: null,
+            addedItems: [new KeyValuePair<string, int>("b", 2)],
+            removedItems: [],
             addAction: null,
             removeAction: null);
 
@@ -188,8 +188,8 @@ public class DictionaryExtensionsTests
         var removed = new List<string>();
 
         await dict.UpdateFromAsync(
-            addedItems: new[] { new KeyValuePair<string, int>("c", 3) },
-            removedItems: new[] { new KeyValuePair<string, int>("a", 1) },
+            addedItems: [new KeyValuePair<string, int>("c", 3)],
+            removedItems: [new KeyValuePair<string, int>("a", 1)],
             addAction: async (k, v, ct) => { await Task.Yield(); added.Add((k, v)); dict.Add(k, v); },
             removeAction: async (k, ct) => { await Task.Yield(); removed.Add(k); return dict.Remove(k); });
 
@@ -204,8 +204,8 @@ public class DictionaryExtensionsTests
         var dict = new Dictionary<string, int> { ["a"] = 1 };
 
         await dict.UpdateFromAsync(
-            addedItems: new[] { new KeyValuePair<string, int>("b", 2) },
-            removedItems: new[] { new KeyValuePair<string, int>("a", 1) });
+            addedItems: [new KeyValuePair<string, int>("b", 2)],
+            removedItems: [new KeyValuePair<string, int>("a", 1)]);
 
         dict.Should().ContainKey("b");
         dict.Should().NotContainKey("a");
@@ -219,7 +219,7 @@ public class DictionaryExtensionsTests
         cts.Cancel();
 
         var action = async () => await dict.UpdateFromAsync(
-            addedItems: new[] { new KeyValuePair<string, int>("b", 2) },
+            addedItems: [new KeyValuePair<string, int>("b", 2)],
             removedItems: null,
             cancellationToken: cts.Token);
 
