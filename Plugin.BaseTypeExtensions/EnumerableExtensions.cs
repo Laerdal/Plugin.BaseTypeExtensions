@@ -80,19 +80,21 @@ public static class EnumerableExtensions
 
     /// <summary>
     ///     Updates the output collection by adding and removing specified items.
+    ///     This is a Layer 1 (core) method that executes actions on explicit item lists.
     /// </summary>
-    /// <typeparam name="T">The type of the items.</typeparam>
+    /// <typeparam name="TAdd">The type of items to add.</typeparam>
+    /// <typeparam name="TRemove">The type of items to remove.</typeparam>
     /// <param name="output">The collection to update.</param>
     /// <param name="addedItems">The items to add to the collection.</param>
     /// <param name="removedItems">The items to remove from the collection.</param>
-    /// <param name="addAction">Action to perform when adding an item.</param>
-    /// <param name="removeAction">Action to perform when removing an item.</param>
-    public static void UpdateFrom<T>(
-        this IEnumerable<T> output,
-        IEnumerable<T> addedItems,
-        IEnumerable<T> removedItems,
-        Action<T>? addAction = null,
-        Action<T>? removeAction = null
+    /// <param name="addAction">Action to perform when adding an item. This parameter is required.</param>
+    /// <param name="removeAction">Action to perform when removing an item. This parameter is required.</param>
+    public static void UpdateFrom<TAdd, TRemove>(
+        this IEnumerable<TRemove> output,
+        IEnumerable<TAdd> addedItems,
+        IEnumerable<TRemove> removedItems,
+        Action<TAdd> addAction,
+        Action<TRemove> removeAction
     )
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -115,8 +117,67 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    ///     Updates the output collection from the input collection with item comparison and actions for adding and removing items.
+    ///     Updates the output collection by adding, updating, and removing specified items.
+    ///     This is a Layer 1 (core) method that executes actions on explicit item lists.
     /// </summary>
+    /// <typeparam name="TAdd">The type of items to add.</typeparam>
+    /// <typeparam name="TUpdate">The type of items to update.</typeparam>
+    /// <typeparam name="TRemove">The type of items to remove.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="addedItems">The items to add to the collection.</param>
+    /// <param name="updatedItems">The items to update in the collection.</param>
+    /// <param name="removedItems">The items to remove from the collection.</param>
+    /// <param name="addAction">Action to perform when adding an item. This parameter is required.</param>
+    /// <param name="updateAction">Action to perform when updating an item. This parameter is required.</param>
+    /// <param name="removeAction">Action to perform when removing an item. This parameter is required.</param>
+    public static void UpdateFrom<TAdd, TUpdate, TRemove>(
+        this IEnumerable<TRemove> output,
+        IEnumerable<TAdd> addedItems,
+        IEnumerable<TUpdate> updatedItems,
+        IEnumerable<TRemove> removedItems,
+        Action<TAdd> addAction,
+        Action<TUpdate> updateAction,
+        Action<TRemove> removeAction
+    )
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(updatedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
+        ArgumentNullException.ThrowIfNull(addAction);
+        ArgumentNullException.ThrowIfNull(updateAction);
+        ArgumentNullException.ThrowIfNull(removeAction);
+
+        // Add items
+        foreach (var item in addedItems)
+        {
+            addAction(item);
+        }
+
+        // Update items
+        foreach (var item in updatedItems)
+        {
+            updateAction(item);
+        }
+
+        // Remove items
+        foreach (var item in removedItems)
+        {
+            removeAction(item);
+        }
+    }
+
+    /// <summary>
+    ///     Updates the output collection from the input collection with item comparison and actions for adding and removing items.
+    ///     This is a Layer 2 (diff-calculating) method that calculates differences and delegates to Layer 1.
+    /// </summary>
+    /// <typeparam name="TInput">The type of the input items.</typeparam>
+    /// <typeparam name="TOutput">The type of the output items.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="input">The collection to use as source for updates.</param>
+    /// <param name="areRepresentingTheSameItem">Function to determine if an input item and output item represent the same entity.</param>
+    /// <param name="addAction">Action to perform when adding an item.</param>
+    /// <param name="removeAction">Action to perform when removing an item.</param>
     public static void UpdateFrom<TInput, TOutput>(
         this IEnumerable<TOutput> output,
         IEnumerable<TInput> input,
@@ -179,22 +240,24 @@ public static class EnumerableExtensions
                 }
             }
 
-            // Apply changes while still holding the lock
-            foreach (var itemToBeAdded in toBeAdded)
-            {
-                addAction(itemToBeAdded);
-            }
-
-            foreach (var itemToBeRemoved in toBeRemoved)
-            {
-                removeAction(itemToBeRemoved);
-            }
+            // Delegate to Layer 1 for execution
+            output.UpdateFrom(toBeAdded, toBeRemoved, addAction, removeAction);
         }
     }
 
     /// <summary>
     ///     Updates the output collection from the input collection with item comparison and actions for adding, updating, and removing items.
+    ///     This is a Layer 2 (diff-calculating) method that calculates differences and delegates to Layer 1.
     /// </summary>
+    /// <typeparam name="TInput">The type of the input items.</typeparam>
+    /// <typeparam name="TOutput">The type of the output items.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="input">The collection to use as source for updates.</param>
+    /// <param name="areRepresentingTheSameItem">Function to determine if an input item and output item represent the same entity.</param>
+    /// <param name="areRepresentingTheSameValue">Function to determine if an input item and output item have the same value.</param>
+    /// <param name="addAction">Action to perform when adding an item.</param>
+    /// <param name="updateAction">Action to perform when updating an item.</param>
+    /// <param name="removeAction">Action to perform when removing an item.</param>
     public static void UpdateFrom<TInput, TOutput>(
         this IEnumerable<TOutput> output,
         IEnumerable<TInput> input,
@@ -269,27 +332,30 @@ public static class EnumerableExtensions
                 }
             }
 
-            // Apply changes while still holding the lock
-            foreach (var itemToBeAdded in toBeAdded)
-            {
-                addAction(itemToBeAdded);
-            }
-
-            foreach (var (outputItem, inputItem) in toBeUpdated)
-            {
-                updateAction(outputItem, inputItem);
-            }
-
-            foreach (var itemToBeRemoved in toBeRemoved)
-            {
-                removeAction(itemToBeRemoved);
-            }
+            // Delegate to Layer 1 for execution
+            output.UpdateFrom(
+                toBeAdded,
+                toBeUpdated,
+                toBeRemoved,
+                addAction,
+                tuple => updateAction(tuple.outputItem, tuple.inputItem),
+                removeAction
+            );
         }
     }
 
     /// <summary>
     ///     Updates the output collection from the input collection with item comparison, type conversion, and actions for adding and removing items.
+    ///     This is a Layer 2 (diff-calculating) method that calculates differences, converts types, and delegates to Layer 1.
     /// </summary>
+    /// <typeparam name="TInput">The type of the input items.</typeparam>
+    /// <typeparam name="TOutput">The type of the output items.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="input">The collection to use as source for updates.</param>
+    /// <param name="areRepresentingTheSameItem">Function to determine if an input item and output item represent the same entity.</param>
+    /// <param name="fromInputTypeToOutputTypeConversion">Function to convert input items to output items.</param>
+    /// <param name="addAction">Action to perform when adding an item.</param>
+    /// <param name="removeAction">Action to perform when removing an item.</param>
     public static void UpdateFrom<TInput, TOutput>(
         this IEnumerable<TOutput> output,
         IEnumerable<TInput> input,
@@ -354,17 +420,9 @@ public static class EnumerableExtensions
                 }
             }
 
-            // Apply changes while still holding the lock
-            foreach (var itemToBeAdded in toBeAdded)
-            {
-                var convertedItem = fromInputTypeToOutputTypeConversion(itemToBeAdded);
-                addAction(convertedItem);
-            }
-
-            foreach (var itemToBeRemoved in toBeRemoved)
-            {
-                removeAction(itemToBeRemoved);
-            }
+            // Convert items and delegate to Layer 1 for execution
+            var convertedAdded = toBeAdded.Select(fromInputTypeToOutputTypeConversion).ToList();
+            output.UpdateFrom<TOutput, TOutput>(convertedAdded, toBeRemoved, addAction, removeAction);
         }
     }
 
@@ -413,20 +471,22 @@ public static class EnumerableExtensions
 
     /// <summary>
     ///     Asynchronously updates the output collection by adding and removing specified items.
+    ///     This is a Layer 1 (core) method that executes actions on explicit item lists.
     /// </summary>
-    /// <typeparam name="T">The type of the items.</typeparam>
+    /// <typeparam name="TAdd">The type of items to add.</typeparam>
+    /// <typeparam name="TRemove">The type of items to remove.</typeparam>
     /// <param name="output">The collection to update.</param>
     /// <param name="addedItems">The items to add to the collection.</param>
     /// <param name="removedItems">The items to remove from the collection.</param>
-    /// <param name="addAction">Async action to perform when adding an item.</param>
-    /// <param name="removeAction">Async action to perform when removing an item.</param>
+    /// <param name="addAction">Async action to perform when adding an item. This parameter is required.</param>
+    /// <param name="removeAction">Async action to perform when removing an item. This parameter is required.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    public static async Task UpdateFromAsync<T>(
-        this IEnumerable<T> output,
-        IEnumerable<T> addedItems,
-        IEnumerable<T> removedItems,
-        Func<T, CancellationToken, Task>? addAction = null,
-        Func<T, CancellationToken, Task>? removeAction = null,
+    public static async ValueTask UpdateFromAsync<TAdd, TRemove>(
+        this IEnumerable<TRemove> output,
+        IEnumerable<TAdd> addedItems,
+        IEnumerable<TRemove> removedItems,
+        Func<TAdd, CancellationToken, ValueTask> addAction,
+        Func<TRemove, CancellationToken, ValueTask> removeAction,
         CancellationToken cancellationToken = default
     )
     {
@@ -452,14 +512,79 @@ public static class EnumerableExtensions
     }
 
     /// <summary>
-    ///     Asynchronously updates the output collection from the input collection with item comparison and actions for adding and removing items.
+    ///     Asynchronously updates the output collection by adding, updating, and removing specified items.
+    ///     This is a Layer 1 (core) method that executes actions on explicit item lists.
     /// </summary>
-    public static async Task UpdateFromAsync<TInput, TOutput>(
+    /// <typeparam name="TAdd">The type of items to add.</typeparam>
+    /// <typeparam name="TUpdate">The type of items to update.</typeparam>
+    /// <typeparam name="TRemove">The type of items to remove.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="addedItems">The items to add to the collection.</param>
+    /// <param name="updatedItems">The items to update in the collection.</param>
+    /// <param name="removedItems">The items to remove from the collection.</param>
+    /// <param name="addAction">Async action to perform when adding an item. This parameter is required.</param>
+    /// <param name="updateAction">Async action to perform when updating an item. This parameter is required.</param>
+    /// <param name="removeAction">Async action to perform when removing an item. This parameter is required.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    public static async ValueTask UpdateFromAsync<TAdd, TUpdate, TRemove>(
+        this IEnumerable<TRemove> output,
+        IEnumerable<TAdd> addedItems,
+        IEnumerable<TUpdate> updatedItems,
+        IEnumerable<TRemove> removedItems,
+        Func<TAdd, CancellationToken, ValueTask> addAction,
+        Func<TUpdate, CancellationToken, ValueTask> updateAction,
+        Func<TRemove, CancellationToken, ValueTask> removeAction,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(updatedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
+        ArgumentNullException.ThrowIfNull(addAction);
+        ArgumentNullException.ThrowIfNull(updateAction);
+        ArgumentNullException.ThrowIfNull(removeAction);
+
+        // Add items
+        foreach (var item in addedItems)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await addAction(item, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Update items
+        foreach (var item in updatedItems)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await updateAction(item, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Remove items
+        foreach (var item in removedItems)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await removeAction(item, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    ///     Asynchronously updates the output collection from the input collection with item comparison and actions for adding and removing items.
+    ///     This is a Layer 2 (diff-calculating) method that calculates differences and delegates to Layer 1.
+    /// </summary>
+    /// <typeparam name="TInput">The type of the input items.</typeparam>
+    /// <typeparam name="TOutput">The type of the output items.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="input">The collection to use as source for updates.</param>
+    /// <param name="areRepresentingTheSameItem">Function to determine if an input item and output item represent the same entity.</param>
+    /// <param name="addAction">Async action to perform when adding an item.</param>
+    /// <param name="removeAction">Async action to perform when removing an item.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    public static async ValueTask UpdateFromAsync<TInput, TOutput>(
         this IEnumerable<TOutput> output,
         IEnumerable<TInput> input,
         Func<TInput, TOutput, bool> areRepresentingTheSameItem,
-        Func<TInput, CancellationToken, Task> addAction,
-        Func<TOutput, CancellationToken, Task> removeAction,
+        Func<TInput, CancellationToken, ValueTask> addAction,
+        Func<TOutput, CancellationToken, ValueTask> removeAction,
         CancellationToken cancellationToken = default
     )
     {
@@ -515,31 +640,32 @@ public static class EnumerableExtensions
             }
         }
 
-        // Apply changes
-        foreach (var itemToBeAdded in toBeAdded)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await addAction(itemToBeAdded, cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach (var itemToBeRemoved in toBeRemoved)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await removeAction(itemToBeRemoved, cancellationToken).ConfigureAwait(false);
-        }
+        // Delegate to Layer 1 for execution
+        await output.UpdateFromAsync(toBeAdded, toBeRemoved, addAction, removeAction, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
     ///     Asynchronously updates the output collection from the input collection with item comparison and actions for adding, updating, and removing items.
+    ///     This is a Layer 2 (diff-calculating) method that calculates differences and delegates to Layer 1.
     /// </summary>
-    public static async Task UpdateFromAsync<TInput, TOutput>(
+    /// <typeparam name="TInput">The type of the input items.</typeparam>
+    /// <typeparam name="TOutput">The type of the output items.</typeparam>
+    /// <param name="output">The collection to update.</param>
+    /// <param name="input">The collection to use as source for updates.</param>
+    /// <param name="areRepresentingTheSameItem">Function to determine if an input item and output item represent the same entity.</param>
+    /// <param name="areRepresentingTheSameValue">Function to determine if an input item and output item have the same value.</param>
+    /// <param name="addAction">Async action to perform when adding an item.</param>
+    /// <param name="updateAction">Async action to perform when updating an item.</param>
+    /// <param name="removeAction">Async action to perform when removing an item.</param>
+    /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
+    public static async ValueTask UpdateFromAsync<TInput, TOutput>(
         this IEnumerable<TOutput> output,
         IEnumerable<TInput> input,
         Func<TInput, TOutput, bool> areRepresentingTheSameItem,
         Func<TInput, TOutput, bool> areRepresentingTheSameValue,
-        Func<TInput, CancellationToken, Task> addAction,
-        Func<TOutput, TInput, CancellationToken, Task> updateAction,
-        Func<TOutput, CancellationToken, Task> removeAction,
+        Func<TInput, CancellationToken, ValueTask> addAction,
+        Func<TOutput, TInput, CancellationToken, ValueTask> updateAction,
+        Func<TOutput, CancellationToken, ValueTask> removeAction,
         CancellationToken cancellationToken = default
     )
     {
@@ -605,23 +731,15 @@ public static class EnumerableExtensions
             }
         }
 
-        // Apply changes
-        foreach (var itemToBeAdded in toBeAdded)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await addAction(itemToBeAdded, cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach (var (outputItem, inputItem) in toBeUpdated)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await updateAction(outputItem, inputItem, cancellationToken).ConfigureAwait(false);
-        }
-
-        foreach (var itemToBeRemoved in toBeRemoved)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            await removeAction(itemToBeRemoved, cancellationToken).ConfigureAwait(false);
-        }
+        // Delegate to Layer 1 for execution
+        await output.UpdateFromAsync(
+            toBeAdded,
+            toBeUpdated,
+            toBeRemoved,
+            addAction,
+            (tuple, ct) => updateAction(tuple.outputItem, tuple.inputItem, ct),
+            removeAction,
+            cancellationToken
+        ).ConfigureAwait(false);
     }
 }

@@ -48,6 +48,7 @@ public static class DictionaryExtensions
 
     /// <summary>
     ///     Updates the output collection by adding and removing specified items.
+    ///     This is a Layer 1 (core) method that executes actions on explicit lists of key-value pairs.
     /// </summary>
     /// <typeparam name="TKey">The type of the dictionary keys.</typeparam>
     /// <typeparam name="TValue">The type of the dictionary values.</typeparam>
@@ -64,7 +65,11 @@ public static class DictionaryExtensions
         Func<TKey, bool>? removeAction = null
     ) where TKey : notnull
     {
-        // Validate inputs and set default actions
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(addedItems);
+        ArgumentNullException.ThrowIfNull(removedItems);
+
+        // Set default actions if output is an IDictionary
         if (output is IDictionary<TKey, TValue> outputAsDictionary)
         {
             addAction ??= outputAsDictionary.Add;
@@ -77,14 +82,12 @@ public static class DictionaryExtensions
         }
 
         // Add items
-        ArgumentNullException.ThrowIfNull(addedItems);
         foreach (var item in addedItems)
         {
             addAction(item.Key, item.Value);
         }
 
         // Remove items
-        ArgumentNullException.ThrowIfNull(removedItems);
         foreach (var item in removedItems)
         {
             removeAction(item.Key);
@@ -202,6 +205,7 @@ public static class DictionaryExtensions
 
     /// <summary>
     /// Updates the output collection from the input collection with custom key and value comparison, conversion, and optional actions for adding, updating, and removing items.
+    /// This is a Layer 2 (diff-calculating) method that calculates differences for dictionaries.
     /// </summary>
     /// <typeparam name="TKeyInput">The type of the input dictionary keys.</typeparam>
     /// <typeparam name="TValueInput">The type of the input dictionary values.</typeparam>
@@ -229,10 +233,10 @@ public static class DictionaryExtensions
     ) where TKeyInput : notnull
         where TKeyOutput : notnull
     {
-        // Validate inputs
+        // Validate inputs and set default actions
         if (output is IDictionary<TKeyOutput, TValueOutput> outputAsDictionary)
         {
-            addAction ??= outputAsDictionary.Add;
+            addAction??= outputAsDictionary.Add;
             updateAction ??= (keyOutput, valueOutput) => outputAsDictionary[keyOutput] = valueOutput;
             removeAction ??= outputAsDictionary.Remove;
         }
@@ -249,13 +253,14 @@ public static class DictionaryExtensions
         ArgumentNullException.ThrowIfNull(fromValueInputTypeToValueOutputTypeConversion);
 
         // Prepare work collections
-
         var keyValuePairs = output as KeyValuePair<TKeyOutput, TValueOutput>[] ?? output.ToArray();
         var outputDictionary = new Dictionary<TKeyOutput, TValueOutput>(keyValuePairs.ToDictionary(pair => pair.Key, pair => pair.Value));
         var inputDictionary = new Dictionary<TKeyInput, TValueInput>(input.ToDictionary(pair => pair.Key, pair => pair.Value));
 
+        // Calculate diffs
         var (toBeAdded, toBeUpdated, toBeRemoved) = CompareDictionaries(areRepresentingTheSameKey, areRepresentingTheSameValue, inputDictionary, outputDictionary);
 
+        // Execute actions
         lock (keyValuePairs)
         {
             foreach (var itemToBeAdded in toBeAdded)
@@ -346,27 +351,27 @@ public static class DictionaryExtensions
     /// <param name="addAction">Async action to perform when adding an item. If null and output is an IDictionary, uses the dictionary's Add method.</param>
     /// <param name="removeAction">Async function to perform when removing an item. If null and output is an IDictionary, uses the dictionary's Remove method.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    public static async Task UpdateFromAsync<TKey, TValue>(
+    public static async ValueTask UpdateFromAsync<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> output,
         IEnumerable<KeyValuePair<TKey, TValue>>? addedItems = null,
         IEnumerable<KeyValuePair<TKey, TValue>>? removedItems = null,
-        Func<TKey, TValue, CancellationToken, Task>? addAction = null,
-        Func<TKey, CancellationToken, Task<bool>>? removeAction = null,
+        Func<TKey, TValue, CancellationToken, ValueTask>? addAction = null,
+        Func<TKey, CancellationToken, ValueTask<bool>>? removeAction = null,
         CancellationToken cancellationToken = default
     ) where TKey : notnull
     {
         // Validate inputs and set default actions
-        Func<TKey, TValue, CancellationToken, Task> finalAddAction;
-        Func<TKey, CancellationToken, Task<bool>> finalRemoveAction;
+        Func<TKey, TValue, CancellationToken, ValueTask> finalAddAction;
+        Func<TKey, CancellationToken, ValueTask<bool>> finalRemoveAction;
 
         if (output is IDictionary<TKey, TValue> outputAsDictionary)
         {
             finalAddAction = addAction ?? ((key, value, ct) =>
             {
                 outputAsDictionary.Add(key, value);
-                return Task.CompletedTask;
+                return ValueTask.CompletedTask;
             });
-            finalRemoveAction = removeAction ?? ((key, ct) => Task.FromResult(outputAsDictionary.Remove(key)));
+            finalRemoveAction = removeAction ?? ((key, ct) => ValueTask.FromResult(outputAsDictionary.Remove(key)));
         }
         else
         {
@@ -414,38 +419,38 @@ public static class DictionaryExtensions
     /// <param name="updateAction">Async action to perform when updating an item.</param>
     /// <param name="removeAction">Async function to perform when removing an item.</param>
     /// <param name="cancellationToken">Token to monitor for cancellation requests.</param>
-    public static async Task UpdateFromAsync<TKeyInput, TValueInput, TKeyOutput, TValueOutput>(
+    public static async ValueTask UpdateFromAsync<TKeyInput, TValueInput, TKeyOutput, TValueOutput>(
         this IEnumerable<KeyValuePair<TKeyOutput, TValueOutput>> output,
         IEnumerable<KeyValuePair<TKeyInput, TValueInput>> input,
         Func<TKeyInput, TKeyOutput, bool> areRepresentingTheSameKey,
         Func<TKeyInput, TKeyOutput> fromKeyInputTypeToKeyOutputTypeConversion,
         Func<TValueInput, TValueOutput, bool> areRepresentingTheSameValue,
         Func<TValueInput, TValueOutput> fromValueInputTypeToValueOutputTypeConversion,
-        Func<TKeyOutput, TValueOutput, CancellationToken, Task>? addAction = null,
-        Func<TKeyOutput, TValueOutput, CancellationToken, Task>? updateAction = null,
-        Func<TKeyOutput, CancellationToken, Task<bool>>? removeAction = null,
+        Func<TKeyOutput, TValueOutput, CancellationToken, ValueTask>? addAction = null,
+        Func<TKeyOutput, TValueOutput, CancellationToken, ValueTask>? updateAction = null,
+        Func<TKeyOutput, CancellationToken, ValueTask<bool>>? removeAction = null,
         CancellationToken cancellationToken = default
     ) where TKeyInput : notnull
         where TKeyOutput : notnull
     {
         // Validate inputs and set default actions
-        Func<TKeyOutput, TValueOutput, CancellationToken, Task> finalAddAction;
-        Func<TKeyOutput, TValueOutput, CancellationToken, Task> finalUpdateAction;
-        Func<TKeyOutput, CancellationToken, Task<bool>> finalRemoveAction;
+        Func<TKeyOutput, TValueOutput, CancellationToken, ValueTask> finalAddAction;
+        Func<TKeyOutput, TValueOutput, CancellationToken, ValueTask> finalUpdateAction;
+        Func<TKeyOutput, CancellationToken, ValueTask<bool>> finalRemoveAction;
 
         if (output is IDictionary<TKeyOutput, TValueOutput> outputAsDictionary)
         {
             finalAddAction = addAction ?? ((key, value, ct) =>
             {
                 outputAsDictionary.Add(key, value);
-                return Task.CompletedTask;
+                return ValueTask.CompletedTask;
             });
             finalUpdateAction = updateAction ?? ((key, value, ct) =>
             {
                 outputAsDictionary[key] = value;
-                return Task.CompletedTask;
+                return ValueTask.CompletedTask;
             });
-            finalRemoveAction = removeAction ?? ((key, ct) => Task.FromResult(outputAsDictionary.Remove(key)));
+            finalRemoveAction = removeAction ?? ((key, ct) => ValueTask.FromResult(outputAsDictionary.Remove(key)));
         }
         else
         {

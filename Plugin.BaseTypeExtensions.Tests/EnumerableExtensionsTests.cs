@@ -75,7 +75,7 @@ public class EnumerableExtensionsTests
         var added = new List<int>();
         var removed = new List<int>();
 
-        output.UpdateFrom(
+        output.UpdateFrom<int, int>(
             addedItems: [4, 5],
             removedItems: [2],
             addAction: added.Add,
@@ -91,7 +91,7 @@ public class EnumerableExtensionsTests
         var output = new List<int> { 1, 2, 3 };
         var removed = new List<int>();
 
-        output.UpdateFrom(
+        output.UpdateFrom<int, int>(
             addedItems: [],
             removedItems: [2],
             addAction: _ => throw new InvalidOperationException("Should not add"),
@@ -106,7 +106,7 @@ public class EnumerableExtensionsTests
         var output = new List<int> { 1, 2 };
         var added = new List<int>();
 
-        output.UpdateFrom(
+        output.UpdateFrom<int, int>(
             addedItems: [3, 4],
             removedItems: [],
             addAction: added.Add,
@@ -181,7 +181,7 @@ public class EnumerableExtensionsTests
         var added = new List<int>();
         var removed = new List<int>();
 
-        await output.UpdateFromAsync(
+        await output.UpdateFromAsync<int, int>(
             addedItems: [4, 5],
             removedItems: [2],
             addAction: async (item, ct) => { await Task.Yield(); added.Add(item); },
@@ -198,7 +198,7 @@ public class EnumerableExtensionsTests
         var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        var action = async () => await output.UpdateFromAsync(
+        var action = async () => await output.UpdateFromAsync<int, int>(
             addedItems: [4, 5],
             removedItems: [],
             addAction: async (item, ct) => { await Task.Delay(100, ct); },
