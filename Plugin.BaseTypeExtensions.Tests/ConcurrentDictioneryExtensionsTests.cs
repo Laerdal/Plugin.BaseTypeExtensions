@@ -87,7 +87,7 @@ public class ConcurrentDictionaryExtensionsTests
         // Assert
         var elapsed = DateTime.UtcNow - startTime;
         result.Should().BeFalse();
-        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(200)); // 2 delays (3 attempts = 2 delays)
+        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(180)); // 2 delays with 10% tolerance for timer imprecision
     }
 
     [Fact]
@@ -257,7 +257,7 @@ public class ConcurrentDictionaryExtensionsTests
         // Assert
         var elapsed = DateTime.UtcNow - startTime;
         result.Success.Should().BeFalse();
-        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(200));
+        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(180)); // 2 delays with 10% tolerance for timer imprecision
     }
 
     [Fact]
@@ -414,7 +414,7 @@ public class ConcurrentDictionaryExtensionsTests
         // Assert
         var elapsed = DateTime.UtcNow - startTime;
         result.Should().BeFalse();
-        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(200));
+        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(180)); // 2 delays with 10% tolerance for timer imprecision
     }
 
     [Fact]
@@ -554,7 +554,7 @@ public class ConcurrentDictionaryExtensionsTests
         // Assert
         var elapsed = DateTime.UtcNow - startTime;
         result.Success.Should().BeFalse();
-        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(200));
+        elapsed.Should().BeGreaterOrEqualTo(TimeSpan.FromMilliseconds(180)); // 2 delays with 10% tolerance for timer imprecision
     }
 
     [Fact]
