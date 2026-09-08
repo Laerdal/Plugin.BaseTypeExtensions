@@ -45,8 +45,8 @@ an individual is officially representing the project in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the
-maintainer, [@framinosona](https://github.com/framinosona), via a private message on GitHub. All
-complaints will be reviewed and investigated promptly and fairly.
+maintainer, [@framinosona](https://github.com/framinosona), via the contact details listed on
+their GitHub profile. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

@@ -15,7 +15,7 @@ applications.
 - `DateTime`/`DateOnly`/`TimeOnly`/`TimeSpan` utilities
 - Reflection and assembly helpers (type discovery, attribute scanning, embedded resources)
 - `IComparable<T>` extensions plus standalone `ComparableTools`/`NumericRangeTools` helpers
-- Smaller extensions for `Byte`, `Guid`, `Version`, `Uri`, `Task`, `TaskCompletionSource`,
+- Smaller extensions for `Byte`, `Guid`, `Version`, `Uri`, `Stream`, `Task`, `TaskCompletionSource`,
   `CancellationToken`, `SemaphoreSlim`, `Random`, `Exception`
 
 ## Technology Stack
@@ -43,7 +43,7 @@ Plugin.BaseTypeExtensions/
 │   ├── DateTimeExtensions.cs / DateOnlyExtensions.cs / TimeOnlyExtensions.cs / TimeSpanExtensions.cs
 │   ├── ComparableExtensions.cs / ComparableTools.cs
 │   ├── ReflectionExtensions.cs / AssemblyExtensions.cs
-│   ├── ByteExtensions.cs / GuidExtensions.cs / VersionExtensions.cs / UriExtensions.cs
+│   ├── ByteExtensions.cs / GuidExtensions.cs / VersionExtensions.cs / UriExtensions.cs / StreamExtensions.cs
 │   ├── TaskExtensions.cs / TaskCompletionSourceExtensions.cs / CancellationTokenExtensions.cs
 │   ├── RandomExtensions.cs / ExceptionExtensions.cs
 ├── Plugin.BaseTypeExtensions.Tests/    # xUnit tests, one file per source file
@@ -98,7 +98,7 @@ dotnet test Plugin.BaseTypeExtensions.Tests/Plugin.BaseTypeExtensions.Tests.cspr
 ## Dependencies
 
 ### Production
-- `Microsoft.Extensions.Logging.Abstractions` (10.0.11)
+- `Microsoft.Extensions.Logging.Abstractions` (10.0.10)
 ### Development
 - `xunit` (2.9.3), `xunit.runner.visualstudio` (3.1.5), `FluentAssertions` (7.2.2)
 - `coverlet.collector` / `coverlet.msbuild` (10.0.1)
