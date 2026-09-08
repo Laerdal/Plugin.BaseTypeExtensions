@@ -98,8 +98,7 @@ dotnet test Plugin.BaseTypeExtensions.Tests/Plugin.BaseTypeExtensions.Tests.cspr
 ## Dependencies
 
 ### Production
-- `Microsoft.Extensions.Logging.Abstractions` (10.0.10)
-
+- `Microsoft.Extensions.Logging.Abstractions` (10.0.11)
 ### Development
 - `xunit` (2.9.3), `xunit.runner.visualstudio` (3.1.5), `FluentAssertions` (7.2.2)
 - `coverlet.collector` / `coverlet.msbuild` (10.0.1)
