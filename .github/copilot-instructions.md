@@ -98,12 +98,12 @@ dotnet test Plugin.BaseTypeExtensions.Tests/Plugin.BaseTypeExtensions.Tests.cspr
 ## Dependencies
 
 ### Production
-- `Microsoft.Extensions.Logging.Abstractions` (10.0.10)
+- `Microsoft.Extensions.Logging.Abstractions` (10.0.11)
 ### Development
-- `xunit` (2.9.3), `xunit.runner.visualstudio` (3.1.5), `FluentAssertions` (7.2.2)
+- `xunit` (2.9.3), `xunit.runner.visualstudio` (4.0.0), `FluentAssertions` (7.2.2)
 - `coverlet.collector` / `coverlet.msbuild` (10.0.1)
-- `Microsoft.NET.Test.Sdk` (18.8.1), `JetBrains.Annotations` (2025.2.0)
-- `Microsoft.CodeAnalysis.NetAnalyzers` (10.0.302), `Microsoft.SourceLink.GitHub` (10.0.201)
+- `Microsoft.NET.Test.Sdk` (18.9.0), `JetBrains.Annotations` (2025.2.0)
+- `Microsoft.CodeAnalysis.NetAnalyzers` (10.0.400), `Microsoft.SourceLink.GitHub` (10.0.201)
 
 (Versions drift via Dependabot — check `Directory.Packages.props` for current values rather than
 trusting this list long-term.)
