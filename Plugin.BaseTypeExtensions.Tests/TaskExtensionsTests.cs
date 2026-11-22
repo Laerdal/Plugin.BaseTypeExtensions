@@ -102,6 +102,42 @@ public class TaskExtensionsTests
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task WaitAsync_Generic_NoTimeout_RespectsToken(int? timeoutMilliseconds)
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<int>();
+        using var cts = new CancellationTokenSource();
+        TimeSpan? timeout = timeoutMilliseconds is { } ms ? TimeSpan.FromMilliseconds(ms) : null;
+
+        // Act
+        var waitTask = tcs.Task.WaitBetterAsync(timeout, cts.Token);
+        cts.Cancel();
+
+        // Assert: bounded, so a regression fails instead of hanging
+        Func<Task> act = () => waitTask.WaitAsync(TimeSpan.FromSeconds(5));
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        tcs.Task.IsCompleted.Should().BeFalse("only the wait is cancelled, not the awaited task");
+    }
+
+    [Fact]
+    public async Task WaitAsync_Generic_NullTimeout_CancelableTokenNotCancelled_ReturnsResult()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource<int>();
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var waitTask = tcs.Task.WaitBetterAsync(null, cts.Token);
+        tcs.SetResult(42);
+
+        // Assert
+        (await waitTask).Should().Be(42);
+    }
+
     #endregion
 
     #region WaitAsync (non-generic) tests
@@ -183,6 +219,43 @@ public class TaskExtensionsTests
         // Assert
         Func<Task> act = () => waitTask;
         await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public async Task WaitAsync_NonGeneric_NoTimeout_RespectsToken(int? timeoutMilliseconds)
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource();
+        using var cts = new CancellationTokenSource();
+        TimeSpan? timeout = timeoutMilliseconds is { } ms ? TimeSpan.FromMilliseconds(ms) : null;
+
+        // Act
+        var waitTask = tcs.Task.WaitBetterAsync(timeout, cts.Token);
+        cts.Cancel();
+
+        // Assert: bounded, so a regression fails instead of hanging
+        Func<Task> act = () => waitTask.WaitAsync(TimeSpan.FromSeconds(5));
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        tcs.Task.IsCompleted.Should().BeFalse("only the wait is cancelled, not the awaited task");
+    }
+
+    [Fact]
+    public async Task WaitAsync_NonGeneric_NullTimeout_CancelableTokenNotCancelled_Completes()
+    {
+        // Arrange
+        var tcs = new TaskCompletionSource();
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        var waitTask = tcs.Task.WaitBetterAsync(null, cts.Token);
+        tcs.SetResult();
+
+        // Assert
+        await waitTask.WaitAsync(TimeSpan.FromSeconds(5));
+        waitTask.IsCompletedSuccessfully.Should().BeTrue();
     }
 
     #endregion

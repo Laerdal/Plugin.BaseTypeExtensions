@@ -11,26 +11,28 @@ public static class TaskExtensions
     /// </summary>
     /// <typeparam name="T">The type of the task result.</typeparam>
     /// <param name="task">The task to wait for.</param>
-    /// <param name="timeout">The optional timeout duration. If null, zero, or negative, the method returns the original task (no timeout).</param>
+    /// <param name="timeout">The optional timeout duration. If null, zero, or negative, no timeout is applied.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>
-    /// If timeout is null, zero, or negative: returns the original task.
-    /// Otherwise: returns a task that completes when the original task completes or when the timeout expires.
+    /// If timeout is null, zero, or negative: returns the original task when <paramref name="cancellationToken"/> cannot be canceled,
+    /// otherwise a task that completes when the original task completes or when the token is canceled.
+    /// Otherwise: returns a task that completes when the original task completes, when the timeout expires, or when the token is canceled.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="task"/> is null.</exception>
     /// <exception cref="TimeoutException">Thrown when the task doesn't complete within the specified timeout.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.</exception>
     /// <remarks>
     /// This method provides a convenient way to add optional timeouts to any task. When no timeout is needed,
-    /// simply pass null and the original task is returned unchanged. This avoids the overhead of timeout monitoring
-    /// when it's not required.
+    /// simply pass null: the original task is returned unchanged unless the token can be canceled, in which case
+    /// the wait stays cancelable. Canceling the token only abandons the wait, the original task keeps running.
     /// </remarks>
     public static Task<T> WaitBetterAsync<T>(this Task<T> task, TimeSpan? timeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(task);
         if (!timeout.HasValue || timeout.Value <= TimeSpan.Zero)
         {
-            return task;
+            // No timeout, but the token must still be observed. Only skip WaitAsync when it can never fire.
+            return cancellationToken.CanBeCanceled ? task.WaitAsync(cancellationToken) : task;
         }
 
         // Cap very large timeouts to avoid ArgumentOutOfRangeException from Task.WaitAsync
@@ -49,26 +51,28 @@ public static class TaskExtensions
     /// Waits for the task to complete within an optional timeout period.
     /// </summary>
     /// <param name="task">The task to wait for.</param>
-    /// <param name="timeout">The optional timeout duration. If null, zero, or negative, the method returns the original task (no timeout).</param>
+    /// <param name="timeout">The optional timeout duration. If null, zero, or negative, no timeout is applied.</param>
     /// <param name="cancellationToken">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>
-    /// If timeout is null, zero, or negative: returns the original task.
-    /// Otherwise: returns a task that completes when the original task completes or when the timeout expires.
+    /// If timeout is null, zero, or negative: returns the original task when <paramref name="cancellationToken"/> cannot be canceled,
+    /// otherwise a task that completes when the original task completes or when the token is canceled.
+    /// Otherwise: returns a task that completes when the original task completes, when the timeout expires, or when the token is canceled.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="task"/> is null.</exception>
     /// <exception cref="TimeoutException">Thrown when the task doesn't complete within the specified timeout.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.</exception>
     /// <remarks>
     /// This method provides a convenient way to add optional timeouts to any task. When no timeout is needed,
-    /// simply pass null and the original task is returned unchanged. This avoids the overhead of timeout monitoring
-    /// when it's not required.
+    /// simply pass null: the original task is returned unchanged unless the token can be canceled, in which case
+    /// the wait stays cancelable. Canceling the token only abandons the wait, the original task keeps running.
     /// </remarks>
     public static Task WaitBetterAsync(this Task task, TimeSpan? timeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(task);
         if (!timeout.HasValue || timeout.Value <= TimeSpan.Zero)
         {
-            return task;
+            // No timeout, but the token must still be observed. Only skip WaitAsync when it can never fire.
+            return cancellationToken.CanBeCanceled ? task.WaitAsync(cancellationToken) : task;
         }
 
         // Cap very large timeouts to avoid ArgumentOutOfRangeException from Task.WaitAsync
