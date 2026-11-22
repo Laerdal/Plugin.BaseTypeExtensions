@@ -26,8 +26,11 @@ public static class NumericRangeTools
     /// <remarks>
     /// This method generates a sequence of numbers starting from `start` to `end`, inclusive, with the specified `step`.
     /// If `step` is zero, an empty sequence is returned.
+    /// The sequence is always ascending from the smaller to the larger of `start` and `end`, and only the magnitude of `step` is used,
+    /// so a negative `step` gives the same sequence as its absolute value.
     /// The sequence will include both `start` and `end` if they are reachable with the given step.
     /// </remarks>
+    /// <exception cref="OverflowException">Thrown while enumerating when `step` is the minimum value of a signed integer type, whose magnitude cannot be represented.</exception>
     public static IEnumerable<T> GetRange<T>(T start, T end, T step) where T : INumber<T>
     {
         if (step == T.Zero)
@@ -35,6 +38,7 @@ public static class NumericRangeTools
             yield break;
         }
 
+        var increment = T.Abs(step);
         var minimum = T.Min(start, end);
         var maximum = T.Max(start, end);
         var current = minimum;
@@ -42,7 +46,7 @@ public static class NumericRangeTools
         while (current <= maximum)
         {
             yield return current;
-            current += step;
+            current += increment;
         }
     }
 
@@ -149,11 +153,6 @@ public static class NumericRangeTools
             var isAscending = end >= start;
             var tickStep = step.Ticks;
             var increment = Math.Abs(tickStep);
-
-            if (increment == 0)
-            {
-                yield break;
-            }
 
             if (!isAscending)
             {
