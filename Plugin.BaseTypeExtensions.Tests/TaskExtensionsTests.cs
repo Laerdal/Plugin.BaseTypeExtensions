@@ -2,6 +2,11 @@ namespace Plugin.BaseTypeExtensions.Tests;
 
 public class TaskExtensionsTests
 {
+    /// <summary>
+    /// Upper bound for waits that only run out when a test is failing (a hang), never in normal runs.
+    /// </summary>
+    private static readonly TimeSpan SafetyTimeout = TimeSpan.FromSeconds(10);
+
     [Fact]
     public void IsDone_ReflectsTaskStatus()
     {
@@ -411,27 +416,29 @@ public class TaskExtensionsTests
     [Fact]
     public async Task StartAndForget_LongRunningTask_DoesNotBlockCaller()
     {
-        // Arrange
-        var taskStarted = false;
+        // Arrange - the task cannot finish until the test releases it, so StartAndForget can
+        // only return while the task is still running if it does not wait for the task
+        var taskStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var task = Task.Run(async () =>
         {
-            taskStarted = true;
-            await Task.Delay(1000); // Long running
+            taskStarted.SetResult();
+            await release.Task;
         });
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            // Act - an implementation that blocks on the task would never return, so bound the call
+            await Task.Run(() => task.StartAndForget(ex => { })).WaitAsync(SafetyTimeout);
 
-        // Act
-        task.StartAndForget(ex => { });
-
-        stopwatch.Stop();
-
-        // Assert - method should return immediately
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100);
-        
-        // Wait a bit and verify task actually started
-        await Task.Delay(50);
-        taskStarted.Should().BeTrue();
+            // Assert
+            await taskStarted.Task.WaitAsync(SafetyTimeout);
+            task.IsCompleted.Should().BeFalse("the task is held until the test releases it");
+        }
+        finally
+        {
+            release.SetResult();
+        }
     }
 
     #endregion
@@ -584,29 +591,31 @@ public class TaskExtensionsTests
     [Fact]
     public async Task StartAndForget_WithTCS_DoesNotBlockCaller()
     {
-        // Arrange
-        var taskStarted = false;
+        // Arrange - the task cannot finish until the test releases it, so StartAndForget can
+        // only return while the task is still running if it does not wait for the task
+        var taskStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var task = Task.Run(async () =>
         {
-            taskStarted = true;
-            await Task.Delay(1000); // Long running
+            taskStarted.SetResult();
+            await release.Task;
         });
         var tcs = new TaskCompletionSource();
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+            // Act - an implementation that blocks on the task would never return, so bound the call
+            await Task.Run(() => task.StartAndForget(tcs)).WaitAsync(SafetyTimeout);
 
-        // Act
-        task.StartAndForget(tcs);
-
-        stopwatch.Stop();
-
-        // Assert - method should return immediately
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100);
-        
-        // Wait a bit and verify task actually started
-        await Task.Delay(50);
-        taskStarted.Should().BeTrue();
-        tcs.Task.IsCompleted.Should().BeFalse("task is still running");
+            // Assert
+            await taskStarted.Task.WaitAsync(SafetyTimeout);
+            task.IsCompleted.Should().BeFalse("the task is held until the test releases it");
+            tcs.Task.IsCompleted.Should().BeFalse("task is still running");
+        }
+        finally
+        {
+            release.SetResult();
+        }
     }
 
     [Fact]
