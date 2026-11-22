@@ -79,7 +79,7 @@ public class SemaphoreSlimExtensionsTests
     {
         // Arrange
         using var semaphore = new SemaphoreSlim(0, 1); // No permits available
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         // Act
         var waitTask = semaphore.WaitBetterAsync(TimeSpan.FromSeconds(10), cts.Token);
@@ -180,7 +180,7 @@ public class SemaphoreSlimExtensionsTests
     {
         // Arrange
         using var semaphore = new SemaphoreSlim(0, 1); // No permits available
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         // Act
         var waitTask = semaphore.WaitBetterAsync(10000, cts.Token);

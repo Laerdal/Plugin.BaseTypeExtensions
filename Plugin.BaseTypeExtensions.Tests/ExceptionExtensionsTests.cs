@@ -41,7 +41,7 @@ public class ExceptionExtensionsTests
         {
             throw new InvalidOperationException("Test with stack trace");
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
             exception = ex;
         }

@@ -145,12 +145,9 @@ public static class UriExtensions
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var query = HttpUtility.ParseQueryString(uri.Query);
 
-        foreach (var key in query.AllKeys)
+        foreach (var key in query.AllKeys.OfType<string>())
         {
-            if (key != null)
-            {
-                result[key] = query[key] ?? string.Empty;
-            }
+            result[key] = query[key] ?? string.Empty;
         }
 
         return result;

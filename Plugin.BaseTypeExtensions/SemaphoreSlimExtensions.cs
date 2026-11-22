@@ -25,7 +25,7 @@ public static class SemaphoreSlimExtensions
     public static async Task<bool> WaitBetterAsync(this SemaphoreSlim semaphore, TimeSpan? timeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(semaphore);
-        if (timeout.HasValue == false || timeout.Value <= TimeSpan.Zero)
+        if (!timeout.HasValue || timeout.Value <= TimeSpan.Zero)
         {
             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             return true;
@@ -63,7 +63,7 @@ public static class SemaphoreSlimExtensions
     public static async Task<bool> WaitBetterAsync(this SemaphoreSlim semaphore, int? millisecondsTimeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(semaphore);
-        if (millisecondsTimeout.HasValue == false || millisecondsTimeout.Value <= 0)
+        if (!millisecondsTimeout.HasValue || millisecondsTimeout.Value <= 0)
         {
             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             return true;

@@ -95,7 +95,7 @@ public class ConcurrentDictionaryExtensionsTests
     {
         // Arrange
         var dictionary = new ConcurrentDictionary<string, int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act
@@ -111,7 +111,7 @@ public class ConcurrentDictionaryExtensionsTests
         // Arrange
         var dictionary = new ConcurrentDictionary<string, int>();
         dictionary.TryAdd("test", 1); // Ensure first attempt fails
-        var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         // Act
         Func<Task> act = async () => await dictionary.TryAddAsync("test", 42, retryCount: 10, delayBetweenRetries: TimeSpan.FromMilliseconds(100), cancellationToken: cts.Token);
@@ -124,10 +124,10 @@ public class ConcurrentDictionaryExtensionsTests
     public async Task TryAddAsync_WithNullDictionary_ThrowsArgumentNullException()
     {
         // Arrange
-        ConcurrentDictionary<string, int>? dictionary = null;
+        ConcurrentDictionary<string, int> dictionary = null!;
 
         // Act
-        Func<Task> act = async () => await dictionary!.TryAddAsync("test", 42);
+        Func<Task> act = async () => await dictionary.TryAddAsync("test", 42);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>()
@@ -265,7 +265,7 @@ public class ConcurrentDictionaryExtensionsTests
     {
         // Arrange
         var dictionary = new ConcurrentDictionary<string, int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act
@@ -279,10 +279,10 @@ public class ConcurrentDictionaryExtensionsTests
     public async Task TryRemoveAsync_WithNullDictionary_ThrowsArgumentNullException()
     {
         // Arrange
-        ConcurrentDictionary<string, int>? dictionary = null;
+        ConcurrentDictionary<string, int> dictionary = null!;
 
         // Act
-        Func<Task> act = async () => await dictionary!.TryRemoveAsync("test");
+        Func<Task> act = async () => await dictionary.TryRemoveAsync("test");
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>()
@@ -422,7 +422,7 @@ public class ConcurrentDictionaryExtensionsTests
     {
         // Arrange
         var dictionary = new ConcurrentDictionary<string, int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act
@@ -436,10 +436,10 @@ public class ConcurrentDictionaryExtensionsTests
     public async Task TryUpdateAsync_WithNullDictionary_ThrowsArgumentNullException()
     {
         // Arrange
-        ConcurrentDictionary<string, int>? dictionary = null;
+        ConcurrentDictionary<string, int> dictionary = null!;
 
         // Act
-        Func<Task> act = async () => await dictionary!.TryUpdateAsync("test", newValue: 42, comparisonValue: 1);
+        Func<Task> act = async () => await dictionary.TryUpdateAsync("test", newValue: 42, comparisonValue: 1);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>()
@@ -562,7 +562,7 @@ public class ConcurrentDictionaryExtensionsTests
     {
         // Arrange
         var dictionary = new ConcurrentDictionary<string, int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act
@@ -576,10 +576,10 @@ public class ConcurrentDictionaryExtensionsTests
     public async Task TryGetValueAsync_WithNullDictionary_ThrowsArgumentNullException()
     {
         // Arrange
-        ConcurrentDictionary<string, int>? dictionary = null;
+        ConcurrentDictionary<string, int> dictionary = null!;
 
         // Act
-        Func<Task> act = async () => await dictionary!.TryGetValueAsync("test");
+        Func<Task> act = async () => await dictionary.TryGetValueAsync("test");
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>()
