@@ -8,7 +8,7 @@ public class AssemblyExtensionsTests
 
     private static string CreateTempDirectory()
     {
-        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var path = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(path);
         return path;
     }
@@ -62,7 +62,7 @@ public class AssemblyExtensionsTests
     public void MoveManifestResourceToDirectory_CreatesDirectoryIfNotExists()
     {
         var parentDirectory = CreateTempDirectory();
-        var targetDirectory = Path.Combine(parentDirectory, "subdir", "nested");
+        var targetDirectory = Path.Join(parentDirectory, "subdir", "nested");
         try
         {
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -89,7 +89,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "resource.txt");
+            var targetFile = Path.Join(directory, "resource.txt");
             File.WriteAllText(targetFile, "existing");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -129,7 +129,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "resource.txt");
+            var targetFile = Path.Join(directory, "resource.txt");
             File.WriteAllText(targetFile, "existing");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -154,9 +154,9 @@ public class AssemblyExtensionsTests
         try
         {
             // Create multiple existing files
-            File.WriteAllText(Path.Combine(directory, "resource.txt"), "existing");
-            File.WriteAllText(Path.Combine(directory, "resource_1.txt"), "existing_1");
-            File.WriteAllText(Path.Combine(directory, "resource_2.txt"), "existing_2");
+            File.WriteAllText(Path.Join(directory, "resource.txt"), "existing");
+            File.WriteAllText(Path.Join(directory, "resource_1.txt"), "existing_1");
+            File.WriteAllText(Path.Join(directory, "resource_2.txt"), "existing_2");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
             var result = assembly.MoveManifestResourceToDirectory(
@@ -180,7 +180,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "document.docx");
+            var targetFile = Path.Join(directory, "document.docx");
             File.WriteAllText(targetFile, "existing");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -205,7 +205,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "document");
+            var targetFile = Path.Join(directory, "document");
             File.WriteAllText(targetFile, "existing");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -272,7 +272,7 @@ public class AssemblyExtensionsTests
     public async Task MoveManifestResourceToDirectoryAsync_CreatesDirectoryIfNotExists()
     {
         var parentDirectory = CreateTempDirectory();
-        var targetDirectory = Path.Combine(parentDirectory, "async_subdir", "nested");
+        var targetDirectory = Path.Join(parentDirectory, "async_subdir", "nested");
         try
         {
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -299,7 +299,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "async_resource.txt");
+            var targetFile = Path.Join(directory, "async_resource.txt");
             File.WriteAllText(targetFile, "existing async");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -339,7 +339,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "async_resource.txt");
+            var targetFile = Path.Join(directory, "async_resource.txt");
             File.WriteAllText(targetFile, "existing async");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
@@ -406,7 +406,7 @@ public class AssemblyExtensionsTests
             catch (OperationCanceledException)
             {
                 // Expected - verify partial file cleanup
-                var expectedFile = Path.Combine(directory, "cancel_test.txt");
+                var expectedFile = Path.Join(directory, "cancel_test.txt");
                 File.Exists(expectedFile).Should().BeFalse("Partial file should be cleaned up on cancellation");
             }
         }
@@ -479,7 +479,7 @@ public class AssemblyExtensionsTests
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
 
             // Test Skip behavior
-            var existingFile = Path.Combine(tempCacheDirectory, "test_skip.txt");
+            var existingFile = Path.Join(tempCacheDirectory, "test_skip.txt");
             File.WriteAllText(existingFile, "existing content");
 
             var result = assembly.MoveManifestResourceToCache(
@@ -575,7 +575,7 @@ public class AssemblyExtensionsTests
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
 
             // Test Skip behavior
-            var existingFile = Path.Combine(tempCacheDirectory, "test_async_skip.txt");
+            var existingFile = Path.Join(tempCacheDirectory, "test_async_skip.txt");
             File.WriteAllText(existingFile, "existing async content");
 
             var result = await assembly.MoveManifestResourceToCacheAsync(
@@ -829,6 +829,86 @@ public class AssemblyExtensionsTests
         await action.Should().ThrowAsync<ArgumentException>().WithParameterName("manifestResourceName");
     }
 
+    [Theory]
+    [InlineData("../escape.txt")]
+    [InlineData("sub/file.txt")]
+    public void MoveManifestResourceToDirectory_ThrowsOnFilenameWithDirectoryPart(string filename)
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Action action = () => assembly.MoveManifestResourceToDirectory(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", directory, filename);
+            action.Should().Throw<ArgumentException>().WithParameterName("filename");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void MoveManifestResourceToDirectory_ThrowsOnRootedFilename_AndWritesNothing()
+    {
+        var directory = CreateTempDirectory();
+        var elsewhere = CreateTempDirectory();
+        try
+        {
+            var rootedFilename = Path.Join(elsewhere, "escape.txt");
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Action action = () => assembly.MoveManifestResourceToDirectory(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", directory, rootedFilename);
+            action.Should().Throw<ArgumentException>().WithParameterName("filename");
+            File.Exists(rootedFilename).Should().BeFalse();
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+            Directory.Delete(elsewhere, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData("../escape.txt")]
+    [InlineData("sub/file.txt")]
+    public async Task MoveManifestResourceToDirectoryAsync_ThrowsOnFilenameWithDirectoryPart(string filename)
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Func<Task> action = () => assembly.MoveManifestResourceToDirectoryAsync(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", directory, filename);
+            await action.Should().ThrowAsync<ArgumentException>().WithParameterName("filename");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task MoveManifestResourceToDirectoryAsync_ThrowsOnRootedFilename_AndWritesNothing()
+    {
+        var directory = CreateTempDirectory();
+        var elsewhere = CreateTempDirectory();
+        try
+        {
+            var rootedFilename = Path.Join(elsewhere, "escape.txt");
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Func<Task> action = () => assembly.MoveManifestResourceToDirectoryAsync(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", directory, rootedFilename);
+            await action.Should().ThrowAsync<ArgumentException>().WithParameterName("filename");
+            File.Exists(rootedFilename).Should().BeFalse();
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+            Directory.Delete(elsewhere, recursive: true);
+        }
+    }
+
     #endregion
 
     #region Edge Case Tests
@@ -844,7 +924,7 @@ public class AssemblyExtensionsTests
             var assembly = typeof(AssemblyExtensionsTests).Assembly;
 
             // Create a file that would cause the rename logic to increment
-            File.WriteAllText(Path.Combine(directory, "test.txt"), "existing");
+            File.WriteAllText(Path.Join(directory, "test.txt"), "existing");
 
             // This should work normally - just testing the edge case exists
             var result = assembly.MoveManifestResourceToDirectory(
@@ -951,7 +1031,7 @@ public class AssemblyExtensionsTests
         var directory = CreateTempDirectory();
         try
         {
-            var targetFile = Path.Combine(directory, "default_test.txt");
+            var targetFile = Path.Join(directory, "default_test.txt");
             File.WriteAllText(targetFile, "existing");
 
             var assembly = typeof(AssemblyExtensionsTests).Assembly;

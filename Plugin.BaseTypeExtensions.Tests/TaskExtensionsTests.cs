@@ -86,7 +86,7 @@ public class TaskExtensionsTests
     {
         // Arrange
         var tcs = new TaskCompletionSource<int>();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         // Act
         var waitTask = tcs.Task.WaitBetterAsync(TimeSpan.FromSeconds(10), cts.Token);
@@ -169,7 +169,7 @@ public class TaskExtensionsTests
     {
         // Arrange
         var tcs = new TaskCompletionSource();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         // Act
         var waitTask = tcs.Task.WaitBetterAsync(TimeSpan.FromSeconds(10), cts.Token);
@@ -200,7 +200,7 @@ public class TaskExtensionsTests
     public async Task WaitAsync_CancelledTask_PropagatesCancellation()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
         var cancelledTask = Task.FromCanceled<int>(cts.Token);
 
@@ -476,15 +476,9 @@ public class TaskExtensionsTests
         // Act
         task.StartAndForget(tcs);
 
-        // Wait for the task to complete by awaiting tcs.Task with exception handling
-        try
-        {
-            await tcs.Task;
-        }
-        catch
-        {
-            // Exception is expected, assertions below will verify
-        }
+        // Wait for the task to complete
+        Func<Task> awaitCompletion = async () => await tcs.Task;
+        await awaitCompletion.Should().ThrowAsync<InvalidOperationException>();
 
         // Assert
         tcs.Task.IsFaulted.Should().BeTrue();
@@ -505,15 +499,9 @@ public class TaskExtensionsTests
         // Act
         task.StartAndForget(tcs);
 
-        // Wait for exception to be set by awaiting tcs.Task with exception handling
-        try
-        {
-            await tcs.Task;
-        }
-        catch
-        {
-            // Exception is expected, assertions below will verify
-        }
+        // Wait for exception to be set
+        Func<Task> awaitCompletion = async () => await tcs.Task;
+        await awaitCompletion.Should().ThrowAsync<ArgumentException>();
 
         // Assert
         tcs.Task.IsFaulted.Should().BeTrue();
@@ -584,14 +572,8 @@ public class TaskExtensionsTests
         task.StartAndForget(tcs);
 
         // Wait for exception to be set
-        try
-        {
-            await tcs.Task;
-        }
-        catch
-        {
-            // Exception is expected, assertions below will verify
-        }
+        Func<Task> awaitCompletion = async () => await tcs.Task;
+        await awaitCompletion.Should().ThrowAsync<OperationCanceledException>();
 
         // Assert
         tcs.Task.IsFaulted.Should().BeTrue();

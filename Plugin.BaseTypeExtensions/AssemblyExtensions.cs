@@ -43,7 +43,7 @@ public static class AssemblyExtensions
     /// <param name="fileAlreadyExistsBehavior">Behavior when the target file already exists.</param>
     /// <returns>A <see cref="FileInfo"/> object representing the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the target directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -61,6 +61,7 @@ public static class AssemblyExtensions
 
         // Generate filename if not provided
         filename ??= $"{DateTime.Now.Ticks}_{Path.GetRandomFileName()}";
+        ThrowIfNotPlainFileName(filename);
 
         // Ensure target directory exists
         if (!Directory.Exists(targetDirectory))
@@ -75,7 +76,7 @@ public static class AssemblyExtensions
             }
         }
 
-        var outputFilePath = Path.Combine(targetDirectory, filename);
+        var outputFilePath = Path.Join(targetDirectory, filename);
 
         // Handle existing file based on specified behavior
         if (File.Exists(outputFilePath))
@@ -100,7 +101,7 @@ public static class AssemblyExtensions
                     do
                     {
                         filename = $"{nameWithoutExtension}_{counter}{extension}";
-                        outputFilePath = Path.Combine(targetDirectory, filename);
+                        outputFilePath = Path.Join(targetDirectory, filename);
                         counter++;
 
                         // Prevent infinite loop in case of extreme edge cases
@@ -173,7 +174,7 @@ public static class AssemblyExtensions
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A <see cref="Task{FileInfo}"/> representing the asynchronous operation that returns a <see cref="FileInfo"/> object for the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the target directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -194,6 +195,7 @@ public static class AssemblyExtensions
 
         // Generate filename if not provided
         filename ??= $"{DateTime.Now.Ticks}_{Path.GetRandomFileName()}";
+        ThrowIfNotPlainFileName(filename);
 
         // Ensure target directory exists
         if (!Directory.Exists(targetDirectory))
@@ -208,7 +210,7 @@ public static class AssemblyExtensions
             }
         }
 
-        var outputFilePath = Path.Combine(targetDirectory, filename);
+        var outputFilePath = Path.Join(targetDirectory, filename);
 
         // Handle existing file based on specified behavior
         if (File.Exists(outputFilePath))
@@ -233,7 +235,7 @@ public static class AssemblyExtensions
                     do
                     {
                         filename = $"{nameWithoutExtension}_{counter}{extension}";
-                        outputFilePath = Path.Combine(targetDirectory, filename);
+                        outputFilePath = Path.Join(targetDirectory, filename);
                         counter++;
 
                         // Prevent infinite loop in case of extreme edge cases
@@ -311,7 +313,7 @@ public static class AssemblyExtensions
     /// <param name="fileAlreadyExistsBehavior">Behavior when the target file already exists.</param>
     /// <returns>A <see cref="FileInfo"/> object representing the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the cache directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -330,7 +332,7 @@ public static class AssemblyExtensions
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A <see cref="Task{FileInfo}"/> representing the asynchronous operation that returns a <see cref="FileInfo"/> object for the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace.</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the cache directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -338,5 +340,17 @@ public static class AssemblyExtensions
     public static async Task<FileInfo> MoveManifestResourceToCacheAsync(this Assembly assembly, string manifestResourceName, string? filename = null, FileAlreadyExistsBehavior fileAlreadyExistsBehavior = FileAlreadyExistsBehavior.Fail, CancellationToken cancellationToken = default)
     {
         return await MoveManifestResourceToDirectoryAsync(assembly, manifestResourceName, CacheDirectory, filename, fileAlreadyExistsBehavior, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Rejects names that would resolve outside the target directory: a rooted path (which
+    /// <see cref="Path.Combine(string, string)"/> would let replace the directory) or one with a directory part such as <c>..</c>.
+    /// </summary>
+    private static void ThrowIfNotPlainFileName(string filename)
+    {
+        if (string.IsNullOrWhiteSpace(filename) || Path.GetFileName(filename) != filename)
+        {
+            throw new ArgumentException($"Filename '{filename}' must be a plain file name without any directory part.", nameof(filename));
+        }
     }
 }

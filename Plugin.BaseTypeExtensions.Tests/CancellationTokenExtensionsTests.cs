@@ -6,7 +6,8 @@ public class CancellationTokenExtensionsTests
     public void WithTimeout_TimeSpan_CreatesCombinedToken()
     {
         // Arrange
-        var originalToken = new CancellationTokenSource().Token;
+        using var cts = new CancellationTokenSource();
+        var originalToken = cts.Token;
         var timeout = TimeSpan.FromMilliseconds(100);
 
         // Act
@@ -21,7 +22,8 @@ public class CancellationTokenExtensionsTests
     public void WithTimeout_Milliseconds_CreatesCombinedToken()
     {
         // Arrange
-        var originalToken = new CancellationTokenSource().Token;
+        using var cts = new CancellationTokenSource();
+        var originalToken = cts.Token;
         var timeoutMs = 100;
 
         // Act
@@ -76,7 +78,7 @@ public class CancellationTokenExtensionsTests
     public void WithTimeout_AlreadyCanceledToken_ReturnsSameToken()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
         var canceledToken = cts.Token;
 
@@ -92,7 +94,7 @@ public class CancellationTokenExtensionsTests
     public void AsTask_ReturnsTaskThatCompletesOnCancellation()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var token = cts.Token;
 
         // Act
@@ -120,7 +122,7 @@ public class CancellationTokenExtensionsTests
     public void AsTask_AlreadyCanceledToken_ReturnsCompletedTask()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
         var token = cts.Token;
 
@@ -136,7 +138,7 @@ public class CancellationTokenExtensionsTests
     public void ThrowIfCanceledAfter_ThrowsWhenCanceled()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var token = cts.Token;
         cts.Cancel();
 
@@ -174,7 +176,7 @@ public class CancellationTokenExtensionsTests
     public void ThrowIfCanceledAfter_TimeoutExpires_ThrowsOperationCanceledException()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var token = cts.Token;
 
         // Act & Assert
@@ -187,7 +189,7 @@ public class CancellationTokenExtensionsTests
     public void WaitHandle_ReturnsTrueWhenCanceled()
     {
         // Arrange
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var token = cts.Token;
         cts.Cancel();
 

@@ -38,15 +38,14 @@ public static partial class StringExtensions
         }
 
         var result = new StringBuilder(input.Length);
-        foreach (var c in input)
+        foreach (var c in input.Where(IsKeptByRemoveSpecialCharacters))
         {
-            if (char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || c == '-')
-            {
-                result.Append(c);
-            }
+            result.Append(c);
         }
         return result.ToString();
     }
+
+    private static bool IsKeptByRemoveSpecialCharacters(char c) => char.IsLetterOrDigit(c) || char.IsWhiteSpace(c) || c == '-';
 
     #region String Validation & Checks
 

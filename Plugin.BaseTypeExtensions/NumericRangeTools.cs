@@ -59,7 +59,7 @@ public static class NumericRangeTools
     /// </remarks>
     public static IEnumerable<double> GetRange(double start, double end, double step)
     {
-        if (step is 0 or double.NaN || double.IsInfinity(step))
+        if (!double.IsFinite(step) || Math.Abs(step) < double.Epsilon)
         {
             return Array.Empty<double>();
         }
@@ -70,11 +70,6 @@ public static class NumericRangeTools
         {
             var isAscending = end >= start;
             var increment = Math.Abs(step);
-
-            if (increment == 0)
-            {
-                yield break;
-            }
 
             if (!isAscending)
             {
@@ -103,7 +98,7 @@ public static class NumericRangeTools
     /// </remarks>
     public static IEnumerable<float> GetRange(float start, float end, float step)
     {
-        if (step is 0 or float.NaN || float.IsInfinity(step))
+        if (!float.IsFinite(step) || MathF.Abs(step) < float.Epsilon)
         {
             return Array.Empty<float>();
         }
@@ -114,11 +109,6 @@ public static class NumericRangeTools
         {
             var isAscending = end >= start;
             var increment = MathF.Abs(step);
-
-            if (increment == 0)
-            {
-                yield break;
-            }
 
             if (!isAscending)
             {

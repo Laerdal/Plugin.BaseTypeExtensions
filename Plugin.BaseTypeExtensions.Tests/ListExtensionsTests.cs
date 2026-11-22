@@ -144,7 +144,7 @@ public class ListExtensionsTests
     public async Task UpdateFromAsync_WithCancellation_ThrowsOperationCanceledException()
     {
         var list = new List<int> { 1, 2 };
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         var action = async () => await list.UpdateFromAsync(

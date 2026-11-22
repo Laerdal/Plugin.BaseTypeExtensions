@@ -28,7 +28,7 @@ public static class TaskExtensions
     public static Task<T> WaitBetterAsync<T>(this Task<T> task, TimeSpan? timeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(task);
-        if (timeout.HasValue == false || timeout.Value <= TimeSpan.Zero)
+        if (!timeout.HasValue || timeout.Value <= TimeSpan.Zero)
         {
             return task;
         }
@@ -66,7 +66,7 @@ public static class TaskExtensions
     public static Task WaitBetterAsync(this Task task, TimeSpan? timeout, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(task);
-        if (timeout.HasValue == false || timeout.Value <= TimeSpan.Zero)
+        if (!timeout.HasValue || timeout.Value <= TimeSpan.Zero)
         {
             return task;
         }

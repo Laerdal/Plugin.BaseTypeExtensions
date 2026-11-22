@@ -215,7 +215,7 @@ public class DictionaryExtensionsTests
     public async Task UpdateFromAsync_WithCancellation_ThrowsOperationCanceledException()
     {
         var dict = new Dictionary<string, int> { ["a"] = 1 };
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         var action = async () => await dict.UpdateFromAsync(

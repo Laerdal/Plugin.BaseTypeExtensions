@@ -195,7 +195,7 @@ public class EnumerableExtensionsTests
     public async Task UpdateFromAsync_WithCancellation_ThrowsOperationCanceledException()
     {
         var output = new List<int> { 1, 2, 3 };
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         var action = async () => await output.UpdateFromAsync<int, int>(
