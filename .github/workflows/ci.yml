@@ -141,6 +141,14 @@ jobs:
           name: tests
           path: 'Output/Tests/'
 
+      - name: '📦 Upload coverage artifact'
+        uses: actions/upload-artifact@v7
+        if: ${{ success() && !cancelled() && steps.test-artifact-check.outputs.found == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        with:
+          name: coverage-report-csharp
+          path: 'Output/Tests/coverage.cobertura.xml'
+          if-no-files-found: error
+
       # ============================ DOCS ============================
       - name: '🔍 Check if docs are needed'
         id: check-docs
@@ -174,6 +182,28 @@ jobs:
         with:
           path: '${{ github.workspace }}/${{ env.DOCS_PATH }}/site'
           name: github-pages
+
+
+  upload-coverage-csharp:
+    name: '📊 Upload Code Coverage'
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      code-quality: write
+    steps:
+      - name: '⬇️ Download coverage artifact'
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-report-csharp
+
+      - name: '📊 Upload coverage report'
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.cobertura.xml
+          language: C#
+          label: code-coverage-agent
 
 
   publish-nuget:
