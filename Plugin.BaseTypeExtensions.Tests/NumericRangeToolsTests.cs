@@ -70,6 +70,59 @@ public class NumericRangeToolsTests
         NumericRangeTools.GetRange(-2, 2, 1).Should().Equal(-2, -1, 0, 1, 2);
     }
 
+    // The negative-step tests cap the sequence with Take so that a regression fails the assertion instead of hanging the run.
+
+    [Fact]
+    public void GetRange_GenericNegativeStepUsesMagnitude()
+    {
+        NumericRangeTools.GetRange(1, 5, -1).Take(100).Should().Equal(1, 2, 3, 4, 5);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithLargeStep()
+    {
+        NumericRangeTools.GetRange(1, 10, -5).Take(100).Should().Equal(1, 6);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithReversedBounds()
+    {
+        NumericRangeTools.GetRange(5, 1, -1).Take(100).Should().Equal(1, 2, 3, 4, 5);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithNegativeNumbers()
+    {
+        NumericRangeTools.GetRange(-5, -1, -2).Take(100).Should().Equal(-5, -3, -1);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithLongs()
+    {
+        NumericRangeTools.GetRange(1L, 3L, -1L).Take(100).Should().Equal(1L, 2L, 3L);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithDecimals()
+    {
+        NumericRangeTools.GetRange(1.0m, 2.0m, -0.5m).Take(100).Should().Equal(1.0m, 1.5m, 2.0m);
+    }
+
+    [Fact]
+    public void GetRange_GenericNegativeStepWithDoubles()
+    {
+        // The explicit type argument selects the generic overload instead of the double one.
+        NumericRangeTools.GetRange<double>(1.0, 2.0, -0.5).Take(100).Should().Equal(1.0, 1.5, 2.0);
+    }
+
+    [Fact]
+    public void GetRange_GenericMinValueStepThrowsInsteadOfLooping()
+    {
+        var act = () => NumericRangeTools.GetRange(0, 10, int.MinValue).Take(100).ToList();
+
+        act.Should().Throw<OverflowException>();
+    }
+
     #endregion
 
     #region Double GetRange Tests
