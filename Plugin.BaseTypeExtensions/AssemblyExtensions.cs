@@ -43,7 +43,7 @@ public static class AssemblyExtensions
     /// <param name="fileAlreadyExistsBehavior">Behavior when the target file already exists.</param>
     /// <returns>A <see cref="FileInfo"/> object representing the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part, or is "." or "..").</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the target directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -174,7 +174,7 @@ public static class AssemblyExtensions
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A <see cref="Task{FileInfo}"/> representing the asynchronous operation that returns a <see cref="FileInfo"/> object for the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part, or is "." or "..").</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the target directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -313,7 +313,7 @@ public static class AssemblyExtensions
     /// <param name="fileAlreadyExistsBehavior">Behavior when the target file already exists.</param>
     /// <returns>A <see cref="FileInfo"/> object representing the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part, or is "." or "..").</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the cache directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -332,7 +332,7 @@ public static class AssemblyExtensions
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A <see cref="Task{FileInfo}"/> representing the asynchronous operation that returns a <see cref="FileInfo"/> object for the extracted file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part).</exception>
+    /// <exception cref="ArgumentException">Thrown when manifestResourceName is empty or whitespace, or when filename is not a plain file name (it has a directory part, or is "." or "..").</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the cache directory cannot be created or accessed.</exception>
     /// <exception cref="FileNotFoundException">Thrown when the manifest resource cannot be found.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or when fileAlreadyExistsBehavior is Fail and file exists.</exception>
@@ -344,11 +344,13 @@ public static class AssemblyExtensions
 
     /// <summary>
     /// Rejects names that would resolve outside the target directory: a rooted path (which
-    /// <see cref="Path.Combine(string, string)"/> would let replace the directory) or one with a directory part such as <c>..</c>.
+    /// <see cref="Path.Combine(string, string)"/> would let replace the directory), one with a directory part such as <c>../x</c>,
+    /// or the relative segments <c>.</c> and <c>..</c>, which <see cref="Path.GetFileName(string)"/> returns unchanged
+    /// but which resolve to the target directory or its parent.
     /// </summary>
     private static void ThrowIfNotPlainFileName(string filename)
     {
-        if (string.IsNullOrWhiteSpace(filename) || Path.GetFileName(filename) != filename)
+        if (string.IsNullOrWhiteSpace(filename) || filename is "." or ".." || Path.GetFileName(filename) != filename)
         {
             throw new ArgumentException($"Filename '{filename}' must be a plain file name without any directory part.", nameof(filename));
         }

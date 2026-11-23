@@ -870,6 +870,27 @@ public class AssemblyExtensionsTests
     }
 
     [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public void MoveManifestResourceToDirectory_ThrowsOnDotFilename_AndCreatesNoDirectory(string filename)
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var targetDirectory = Path.Join(root, "not-created");
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Action action = () => assembly.MoveManifestResourceToDirectory(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", targetDirectory, filename);
+            action.Should().Throw<ArgumentException>().WithParameterName("filename");
+            Directory.Exists(targetDirectory).Should().BeFalse();
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Theory]
     [InlineData("../escape.txt")]
     [InlineData("sub/file.txt")]
     public async Task MoveManifestResourceToDirectoryAsync_ThrowsOnFilenameWithDirectoryPart(string filename)
@@ -906,6 +927,27 @@ public class AssemblyExtensionsTests
         {
             Directory.Delete(directory, recursive: true);
             Directory.Delete(elsewhere, recursive: true);
+        }
+    }
+
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    public async Task MoveManifestResourceToDirectoryAsync_ThrowsOnDotFilename_AndCreatesNoDirectory(string filename)
+    {
+        var root = CreateTempDirectory();
+        try
+        {
+            var targetDirectory = Path.Join(root, "not-created");
+            var assembly = typeof(AssemblyExtensionsTests).Assembly;
+            Func<Task> action = () => assembly.MoveManifestResourceToDirectoryAsync(
+                "Plugin.BaseTypeExtensions.Tests.Resources.FirstResource.txt", targetDirectory, filename);
+            await action.Should().ThrowAsync<ArgumentException>().WithParameterName("filename");
+            Directory.Exists(targetDirectory).Should().BeFalse();
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
         }
     }
 
